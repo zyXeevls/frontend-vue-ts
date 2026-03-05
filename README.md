@@ -1,220 +1,119 @@
-# Frontend Vue + TypeScript (Untuk Backend Rust)
+# Frontend Vue + TypeScript (Sementara)
 
-Frontend ini dibuat dengan **Vue 3 + TypeScript + Vite** sebagai client untuk backend Rust yang sudah dibuat sebelumnya.
+Frontend ini dibuat dengan **Vue 3 + TypeScript + Vite** sebagai client untuk backend Rust JWT.
+
+Referensi backend:
 [Backend Api Jwt Rust](https://github.com/zyXeevls/backend-api-jwt-rust)
 
-Status saat ini:
-- Fondasi project sudah siap (Vite + Vue + TS).
-- `axios` client sudah dibuat di `services/api.ts`.
-- `@tanstack/vue-query` sudah terpasang dan diregistrasi di `src/main.ts`.
-- UI masih bawaan starter (belum final feature app).
+## Status Sementara
 
-## Tujuan Project
+- Routing sudah aktif (`vue-router`) untuk halaman `home`, `register`, `login`.
+- Auth form register/login sudah terhubung ke API via `@tanstack/vue-query` mutation.
+- HTTP client terpusat di `services/api.ts`.
+- Header `Authorization: Bearer <token>` dikirim otomatis lewat axios interceptor jika cookie `token` ada.
+- Alias import `@/*` sudah aktif di Vite + TypeScript.
 
-Frontend ini dipakai untuk:
-- Menampilkan data dari API backend Rust.
-- Mengirim request CRUD (create/read/update/delete) ke backend.
-- Menjadi antarmuka user untuk alur aplikasi fullstack Rust + Vue.
+## Stack
 
-## Stack Teknologi
+- `vue`
+- `typescript`
+- `vite`
+- `vue-router`
+- `@tanstack/vue-query`
+- `axios`
+- `js-cookie`
+- `bootstrap` (CDN)
 
-- `vue` `^3.5.25`
-- `typescript` `~5.9.3`
-- `vite` `^7.3.1`
-- `axios` `^1.13.6`
-- `@tanstack/vue-query` `^5.92.9`
-- `js-cookie` `^3.0.5`
-- `bootstrap` (via CDN di `index.html`)
-
-## Struktur Folder
+## Struktur Folder (Ringkas)
 
 ```txt
 frontend-vue-ts/
-|-- index.html
-|-- package.json
-|-- vite.config.ts
-|-- tsconfig.json
-|-- tsconfig.app.json
-|-- tsconfig.node.json
 |-- services/
 |   `-- api.ts
-|-- public/
 `-- src/
-    |-- App.vue
-    |-- main.ts
-    |-- assets/
-    `-- components/
-        `-- HelloWorld.vue
+	|-- composables/
+	|   `-- auth/
+	|       |-- useAuthUser.ts
+	|       |-- useLogin.ts
+	|       |-- useLogout.ts
+	|       `-- useRegister.ts
+	|-- routes/
+	|   `-- index.ts
+	`-- views/
+		|-- auth/
+		|   |-- login.vue
+		|   `-- register.vue
+		`-- home/
+			`-- index.vue
 ```
 
-## Penjelasan File Penting
+## Konfigurasi Penting
 
-### `services/api.ts`
+### Base URL API
 
-Central HTTP client untuk request ke backend:
+`services/api.ts` memakai:
 
-- Base URL: `http://localhost:3000/api`
-- Header default: `Content-Type: application/json`
+- `import.meta.env.VITE_API_BASE_URL`, atau fallback ke
+- `http://localhost:3000/api`
 
-Semua pemanggilan API sebaiknya lewat instance ini agar konsisten.
+Contoh `.env`:
 
-### `src/main.ts`
-
-Bootstrap aplikasi Vue:
-
-- Membuat app dari `App.vue`
-- Register `VueQueryPlugin`
-- Mount ke `#app`
-
-### `index.html`
-
-- Menyediakan root mount `<div id="app"></div>`
-- Memuat Bootstrap CSS/JS via CDN
-- Menambahkan font `Quicksand` via Google Fonts
-
-## Prasyarat
-
-- Node.js `>= 20` (disarankan versi LTS terbaru)
-- `pnpm` terinstal global
-
-Contoh cek versi:
-
-```bash
-node -v
-pnpm -v
+```env
+VITE_API_BASE_URL=http://localhost:3000/api
 ```
 
-## Instalasi
+### Alias Path
 
-```bash
-pnpm install
+- Vite: `vite.config.ts` -> `resolve.alias` (`@` ke `./src`)
+- TypeScript: `tsconfig.app.json` -> `baseUrl` + `paths`
+
+Contoh import:
+
+```ts
+import { useLogin } from "@/composables/auth/useLogin";
 ```
+
+## Alur Auth Saat Ini
+
+1. Register kirim `POST /register`.
+2. Login kirim `POST /login`.
+3. Saat login sukses, token/user disimpan ke cookie (`token`, `user`).
+4. Request berikutnya otomatis membawa bearer token dari cookie.
+5. Logout menghapus cookie auth.
 
 ## Menjalankan Project
 
-### Development mode
-
 ```bash
+pnpm install
 pnpm dev
 ```
 
-Default Vite berjalan di:
-- `http://localhost:5173`
-
-### Build production
+Build production:
 
 ```bash
 pnpm build
-```
-
-### Preview hasil build
-
-```bash
 pnpm preview
 ```
 
-## Integrasi Dengan Backend Rust
+## Known Issue (Sementara)
 
-Secara default frontend memanggil backend di:
+- Di `src/views/auth/login.vue`, redirect sukses login saat ini ke `/admin/dashboard`.
+- Route `/admin/dashboard` belum terdaftar di `src/routes/index.ts`.
+- Jika setelah login pindah ke halaman kosong/404, ubah redirect ke route yang sudah ada (misal `/`) atau tambahkan route dashboard.
 
-`http://localhost:3000/api`
+## Troubleshooting Cepat
 
-Pastikan:
-- Service backend Rust sudah aktif di port `3000`.
-- Endpoint tersedia dengan prefix `/api`.
-- CORS backend mengizinkan origin frontend (umumnya `http://localhost:5173`).
+### Missing or invalid token
 
-## Alur Pengembangan API di Frontend
+- Pastikan login response memang mengembalikan token.
+- Cek cookie `token` tersimpan setelah login.
+- Cek endpoint protected menerima header `Authorization: Bearer <token>`.
 
-Disarankan pola berikut:
+### Network error / CORS
 
-1. Buat module API per domain di `src` (misal `src/features/todos/api.ts`).
-2. Gunakan `Api` dari `services/api.ts` untuk request `GET/POST/PUT/DELETE`.
-3. Bungkus request dengan composable berbasis Vue Query (`useQuery`, `useMutation`).
-4. Render data di komponen page/feature.
+- Pastikan backend Rust aktif di `localhost:3000`.
+- Cek CORS backend mengizinkan origin frontend (`http://localhost:5173`).
 
-Contoh singkat service:
+### 404 endpoint
 
-```ts
-import Api from "../../services/api";
-
-export async function getTodos() {
-	const response = await Api.get("/todos");
-	return response.data;
-}
-```
-
-Contoh singkat query:
-
-```ts
-import { useQuery } from "@tanstack/vue-query";
-import { getTodos } from "./api";
-
-export function useTodosQuery() {
-	return useQuery({
-		queryKey: ["todos"],
-		queryFn: getTodos,
-	});
-}
-```
-
-## Rekomendasi Struktur Lanjutan
-
-Saat mulai tambah fitur real, struktur bisa dikembangkan menjadi:
-
-```txt
-src/
-|-- app/
-|-- features/
-|   `-- <feature-name>/
-|       |-- api.ts
-|       |-- queries.ts
-|       |-- mutations.ts
-|       `-- components/
-|-- shared/
-|   |-- components/
-|   |-- utils/
-|   `-- types/
-`-- router/
-```
-
-## Catatan Penting Saat Ini
-
-- Dependency `vue-router` sudah terpasang, tapi routing belum diaktifkan di kode.
-- Dependency `js-cookie` sudah terpasang, tapi belum dipakai untuk auth/session.
-- `services/api.ts` masih hardcoded base URL. Untuk production, lebih aman pindah ke environment variable Vite (`import.meta.env`).
-
-## Rencana Improvement yang Disarankan
-
-1. Pindahkan base URL ke `.env` (`VITE_API_BASE_URL`).
-2. Tambahkan folder fitur + typed API response/interface.
-3. Implement global error handling (axios interceptor).
-4. Tambahkan router dan layout halaman.
-5. Tambahkan halaman real (list/create/update/delete) sesuai endpoint backend Rust.
-
-## Troubleshooting
-
-### `Network Error` saat request
-
-Periksa:
-- Backend Rust berjalan.
-- Port backend benar (`3000`).
-- Konfigurasi CORS backend.
-
-### `404` endpoint tidak ditemukan
-
-Periksa path endpoint di frontend apakah sudah sesuai dengan route backend (misal `/api/todos`).
-
-### Build gagal karena TypeScript
-
-Jalankan:
-
-```bash
-pnpm build
-```
-
-Lalu perbaiki error typing yang tampil di terminal.
-
-## Lisensi
-
-Ikuti lisensi utama repository project fullstack Rust + Vue ini.
+- Pastikan endpoint frontend match dengan backend dan prefix `/api`.

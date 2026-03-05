@@ -10,7 +10,7 @@ interface RegisterRequest {
 export const useRegister = () => {
     return useMutation({
         mutationFn: async (data: RegisterRequest) => {
-            const response = await Api.post("/register", data);
+            const response = await Api.post("/api/register", data);
             return response.data;
         }
     })
