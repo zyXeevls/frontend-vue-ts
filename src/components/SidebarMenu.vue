@@ -1,9 +1,19 @@
 <script setup lang="ts">
 import { useLogout } from '@/composables/auth/useLogout';
+import Swal from 'sweetalert2';
 
 const { logout } = useLogout();
 const handleLogout = () => {
-    logout();
+    Swal.fire({
+        title: 'Kamu yakin?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, logout!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            logout();
+        }
+    });
 };
 
 </script>
