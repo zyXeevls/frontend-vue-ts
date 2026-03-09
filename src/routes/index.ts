@@ -30,6 +30,12 @@ const routes: RouteRecordRaw[] = [
         name: "admin-users",
         component: () => import("../views/admin/users/index.vue"),
         meta: { requiresAuth: true }
+    },
+    {
+        path: "/admin/users/create",
+        name: "admin-users-create",
+        component: () => import("../views/admin/users/create.vue"),
+        meta: { requiresAuth: true }
     }
 ]
 
@@ -38,7 +44,8 @@ const router = createRouter({
     routes,
 });
 
-router.beforeEach((to, _from, next) => {
+router.beforeEach((to, _from, next) =>
+{
     const token = getToken();
 
     if (to.matched.some(record => record.meta.requiresAuth) && !token) {
