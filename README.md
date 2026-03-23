@@ -1,4 +1,4 @@
-# Frontend Vue + TypeScript (Sementara)
+# Frontend Vue + TypeScript 
 
 Frontend ini dibuat dengan **Vue 3 + TypeScript + Vite** sebagai client untuk backend Rust JWT.
 
